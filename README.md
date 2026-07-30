@@ -4,6 +4,16 @@ Internal [Claude Code](https://code.claude.com) plugin marketplace maintained by
 
 Add this marketplace to Claude Code once, then install any Ono plugin from it.
 
+This repository also hosts the **ecosystem documentation** — the material that describes how the plugins fit together rather than any single plugin:
+
+| Document | Answers |
+| --- | --- |
+| **[`docs/architecture/ecosystem-overview.html`](docs/architecture/ecosystem-overview.html)** | **Start here.** How the plugins cooperate, what Repository Knowledge is, the complete Claude Code workflow, the command chain, and how information flows from one command to the next. Bilingual (English / Hebrew). |
+| [`docs/specs/repo-knowledge-encapsulation.md`](docs/specs/repo-knowledge-encapsulation.md) | Why it is built this way: the ecosystem review, every duplication found, the ownership model, and the alternatives rejected. |
+| [`docs/plans/repo-knowledge-mvp-implementation.md`](docs/plans/repo-knowledge-mvp-implementation.md) | What was built, task by task, with verification commands. Amended as it was executed, so it matches reality. |
+
+Documentation for an individual plugin lives in that plugin's own repository.
+
 ## Which plugin do I need?
 
 | I am a... | Use this plugin |

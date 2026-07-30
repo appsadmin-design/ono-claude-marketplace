@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OnO Plugin Ecosystem — Architecture &amp; Workflow</title>
+<style>
+:root{
+  --ink:#151a24; --paper:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5;
+  --rule:#dde1e8; --slate:#5a6373;
+  --steel:#2f5d8c; --steel-soft:#e8eff6;
+  --amber:#a8590c; --amber-soft:#fbf1e6;
+  --verdigris:#2c6a51; --verdigris-soft:#e8f1ec;
+  --shadow:0 1px 2px rgba(21,26,36,.05), 0 8px 24px -12px rgba(21,26,36,.14);
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --heb:'Arial Hebrew','Narkisim','David',Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
+  --measure:64rem;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ink:#e2e7f0; --paper:#0f1218; --surface:#171b24; --surface-2:#1e2430;
+    --rule:#2b3241; --slate:#98a1b2;
+    --steel:#82abd6; --steel-soft:#1a2634;
+    --amber:#dd964c; --amber-soft:#2a2118;
+    --verdigris:#74b494; --verdigris-soft:#16241d;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e2e7f0; --paper:#0f1218; --surface:#171b24; --surface-2:#1e2430;
+  --rule:#2b3241; --slate:#98a1b2; --steel:#82abd6; --steel-soft:#1a2634;
+  --amber:#dd964c; --amber-soft:#2a2118; --verdigris:#74b494; --verdigris-soft:#16241d;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --ink:#151a24; --paper:#f6f7f9; --surface:#ffffff; --surface-2:#eef1f5;
+  --rule:#dde1e8; --slate:#5a6373; --steel:#2f5d8c; --steel-soft:#e8eff6;
+  --amber:#a8590c; --amber-soft:#fbf1e6; --verdigris:#2c6a51; --verdigris-soft:#e8f1ec;
+  --shadow:0 1px 2px rgba(21,26,36,.05), 0 8px 24px -12px rgba(21,26,36,.14);
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16.5px; line-height:1.65; -webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--measure); margin:0 auto; padding:0 clamp(1.1rem,4vw,2.5rem)}
+section{padding:clamp(2.5rem,6vw,4.25rem) 0; border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0}
+.band{background:var(--surface-2)}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:600; text-wrap:balance; margin:0}
+h1{font-size:clamp(2.1rem,6vw,3.4rem); line-height:1.08; letter-spacing:-.015em}
+h2{font-size:clamp(1.5rem,3.4vw,2.05rem); line-height:1.2; margin-bottom:.35em}
+h3{font-size:1.14rem; line-height:1.3}
+h4{font-size:1rem; line-height:1.35}
+p{margin:0 0 1em; max-width:66ch}
+ul,ol{margin:0 0 1em; padding-left:1.35em; max-width:66ch}
+li{margin:.3em 0}
+a{color:var(--steel)}
+strong{font-weight:650}
+code{font-family:var(--mono); font-size:.87em; background:var(--surface-2); border:1px solid var(--rule); border-radius:4px; padding:.1em .35em}
+.band code{background:var(--surface)}
+.eyebrow{font-family:var(--mono); font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--slate); margin:0 0 .85rem}
+.lede{font-size:1.12rem; color:var(--slate); max-width:60ch}
+.note{font-size:.9rem; color:var(--slate)}
+
+/* Hebrew companion block */
+.he{
+  direction:rtl; text-align:right; font-family:var(--heb);
+  background:var(--surface); border:1px solid var(--rule);
+  border-right:3px solid var(--steel); border-radius:10px;
+  padding:1.05rem 1.25rem; margin:1.5rem 0 0; font-size:1rem; line-height:1.8
+}
+.band .he{background:var(--surface)}
+.he .tag{
+  display:block; direction:rtl; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--slate); margin:0 0 .5rem
+}
+.he p{margin:0 0 .7em; max-width:none}
+.he p:last-child{margin:0}
+.he ul{padding-right:1.3em; padding-left:0; max-width:none; margin:0 0 .7em}
+.he code{direction:ltr; display:inline-block; font-family:var(--mono)}
+
+header.masthead{padding:clamp(3rem,9vw,6rem) 0 clamp(2rem,5vw,3rem)}
+.title-rule{height:3px; width:64px; background:var(--steel); margin:0 0 1.75rem; border-radius:2px}
+.meta{display:flex; flex-wrap:wrap; gap:.5rem .65rem; margin:2rem 0 0; font-family:var(--mono); font-size:.76rem}
+.meta span{background:var(--surface); border:1px solid var(--rule); border-radius:100px; padding:.3rem .7rem; color:var(--slate)}
+.meta span b{color:var(--ink); font-weight:600}
+.chip{display:inline-flex; align-items:center; gap:.4em; font-family:var(--mono); font-size:.72rem; letter-spacing:.04em; text-transform:uppercase; border-radius:100px; padding:.28rem .68rem; border:1px solid; white-space:nowrap}
+.chip.ok{color:var(--verdigris); background:var(--verdigris-soft); border-color:var(--verdigris)}
+.chip.pend{color:var(--amber); background:var(--amber-soft); border-color:var(--amber)}
+.chip.info{color:var(--steel); background:var(--steel-soft); border-color:var(--steel)}
+.grid{display:grid; gap:1rem; margin:1.75rem 0 0}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,20rem),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr))}
+.card{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:1.2rem 1.3rem; box-shadow:var(--shadow)}
+.card h3,.card h4{margin-bottom:.5rem}
+.card p:last-child,.card ul:last-child{margin-bottom:0}
+.card ul{padding-left:1.1em; font-size:.94rem}
+.card.accent{border-left:3px solid var(--steel)}
+.card.accent-amber{border-left:3px solid var(--amber)}
+.card.accent-green{border-left:3px solid var(--verdigris)}
+.callout{border:1px solid var(--rule); border-left:3px solid var(--amber); background:var(--amber-soft); border-radius:8px; padding:1.05rem 1.2rem; margin:1.75rem 0 0}
+.callout.steel{border-left-color:var(--steel); background:var(--steel-soft)}
+.callout .h{font-family:var(--mono); font-size:.7rem; letter-spacing:.11em; text-transform:uppercase; color:var(--amber); margin:0 0 .4rem}
+.callout.steel .h{color:var(--steel)}
+.callout p:last-child{margin-bottom:0}
+.ba{display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,21rem),1fr)); margin:1.75rem 0 0}
+.ba-col{background:var(--surface); border:1px solid var(--rule); border-radius:10px; overflow:hidden}
+.ba-head{padding:.85rem 1.2rem; border-bottom:1px solid var(--rule); display:flex; align-items:center; justify-content:space-between; gap:.75rem}
+.ba-head h3{font-size:1.02rem}
+.ba-body{padding:1.1rem 1.2rem}
+.ba-body ul{list-style:none; padding:0; margin:0; font-size:.94rem}
+.ba-body li{display:flex; gap:.6rem; padding:.5rem 0; border-bottom:1px dashed var(--rule)}
+.ba-body li:last-child{border-bottom:0}
+.mk{font-family:var(--mono); flex:0 0 1.1rem; text-align:center}
+.mk.bad{color:var(--amber)} .mk.good{color:var(--verdigris)}
+.ba-col.old .ba-head{background:var(--amber-soft)}
+.ba-col.new .ba-head{background:var(--verdigris-soft)}
+.flow{margin:1.75rem 0 0; display:flex; flex-direction:column}
+.node{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:.95rem 1.15rem; display:grid; grid-template-columns:2.4rem 1fr; gap:.9rem; align-items:start}
+.node .idx{font-family:var(--mono); font-size:.74rem; color:var(--steel); background:var(--steel-soft); border:1px solid var(--steel); border-radius:6px; text-align:center; padding:.2rem 0; font-weight:600}
+.node .body h4{margin:0 0 .2rem}
+.node .body .who{font-family:var(--mono); font-size:.7rem; letter-spacing:.06em; text-transform:uppercase; color:var(--slate); margin:0 0 .35rem}
+.node .body p{margin:0; font-size:.93rem; color:var(--slate); max-width:60ch}
+.node.owner-p{border-left:3px solid var(--steel)}
+.node.owner-c{border-left:3px solid var(--verdigris)}
+.arrow{align-self:center; margin:.45rem 0 .45rem 1.15rem; font-family:var(--mono); line-height:1; font-size:1.05rem}
+.arrow::before{content:"↓"; color:var(--slate); opacity:.55}
+.chain{margin:1.75rem 0 0; border-left:2px solid var(--rule)}
+.step{position:relative; padding:0 0 1.25rem 1.6rem; margin-left:-1px}
+.step:last-child{padding-bottom:0}
+.step::before{content:""; position:absolute; left:-6px; top:.55rem; width:10px; height:10px; border-radius:50%; background:var(--steel); border:2px solid var(--paper)}
+.band .step::before{border-color:var(--surface-2)}
+.step.term::before{background:var(--verdigris)}
+.step .cmd{font-family:var(--mono); font-size:.94rem; font-weight:600; color:var(--ink)}
+.step .plugin{font-family:var(--mono); font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--slate); margin-left:.5rem}
+.io{display:grid; gap:.3rem .9rem; grid-template-columns:auto 1fr; margin:.5rem 0 0; font-size:.9rem}
+.io dt{font-family:var(--mono); font-size:.68rem; letter-spacing:.07em; text-transform:uppercase; color:var(--slate); padding-top:.18em}
+.io dd{margin:0; color:var(--ink)}
+.tw{overflow-x:auto; margin:1.75rem 0 0; border:1px solid var(--rule); border-radius:10px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:.93rem; min-width:34rem}
+th,td{text-align:left; padding:.62rem .9rem; border-bottom:1px solid var(--rule); vertical-align:top}
+thead th{font-family:var(--mono); font-size:.68rem; letter-spacing:.09em; text-transform:uppercase; color:var(--slate); font-weight:600; background:var(--surface-2); white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.split{display:grid; gap:1.25rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr)); margin:1.75rem 0 0}
+.pane{background:var(--surface); border:1px solid var(--rule); border-radius:10px; padding:1.3rem 1.4rem}
+.pane.p{border-top:3px solid var(--steel)}
+.pane.c{border-top:3px solid var(--verdigris)}
+.pane h3{display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-bottom:.15rem}
+.pane .sub{font-family:var(--mono); font-size:.72rem; color:var(--slate); margin:0 0 1rem}
+.pane h4{margin:1.1rem 0 .4rem; font-family:var(--mono); font-size:.7rem; letter-spacing:.09em; text-transform:uppercase; color:var(--slate)}
+.pane ul{margin:0; padding-left:1.1em; font-size:.94rem}
+footer{border-top:1px solid var(--rule); padding:2rem 0 3rem; color:var(--slate); font-size:.88rem}
+footer p{max-width:70ch}
+:focus-visible{outline:2px solid var(--steel); outline-offset:2px; border-radius:3px}
+@media print{body{background:#fff} .card,.pane,.tw,.ba-col,.he{box-shadow:none} section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="eyebrow">OnO Plugin Ecosystem · Documentation Entry Point</p>
+    <h1>Repository Knowledge</h1>
+    <div class="title-rule"></div>
+    <p class="lede">How our Claude Code plugins cooperate: one plugin derives what a repository is,
+      every other plugin cites it. This is the front door — start here, then follow the pointers in
+      the final section for depth.</p>
+    <div class="meta">
+      <span><b>Producer</b> ono-plugin-project-inspector</span>
+      <span><b>Consumer</b> ono-mobile-dev-plugin</span>
+      <span><b>Contract</b> repo-knowledge schema v1</span>
+    </div>
+    <div class="he" style="margin-top:2rem">
+      <span class="tag">עברית</span>
+      <p><strong>מסמך זה הוא נקודת הכניסה לתיעוד של מערכת הפלאגינים.</strong> הוא מסביר כיצד
+        הפלאגינים שלנו משתפים ידע על מאגר הקוד: פלאגין אחד גוזר את הידע פעם אחת ומאשר אותו מול
+        מפתח, וכל שאר הפלאגינים מפנים אליו במקום לגזור אותו מחדש.</p>
+      <p>כל פרק להלן מופיע קודם באנגלית ולאחריו תקציר בעברית. בסוף המסמך יש הפניות לתיעוד המפורט.</p>
+    </div>
+  </div>
+</header>
+
+<!-- ══ 1. THE ECOSYSTEM ══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">01</p>
+    <h2>The plugin ecosystem</h2>
+    <p>Four plugins are distributed through one internal marketplace,
+      <code>ono-plugin-marketplace</code>. A developer adds the marketplace once and installs any of
+      them from a single catalogue, over HTTPS, with no SSH keys required.</p>
+
+    <div class="grid g2">
+      <div class="card accent">
+        <h3>Project Inspector <span class="chip info">Producer</span></h3>
+        <p>Reads an existing repository and gradually builds an approved knowledge base about it —
+          project context, an audit topic index, a descriptive knowledge base, and one reviewed audit
+          document per topic. It never modifies source code.</p>
+      </div>
+      <div class="card accent-green">
+        <h3>Mobile Dev Plugin <span class="chip info">Consumer</span></h3>
+        <p>An eight-stage feature pipeline across React Native, native iOS, native Android and React
+          web, with a human approval gate between every stage. It consumes the Inspector's knowledge
+          rather than re-deriving it.</p>
+      </div>
+      <div class="card">
+        <h3>QA Plugin</h3>
+        <p>Authors test plans from designs and specifications, in parallel with development, then
+          compares them against the dev team's handoff notes to surface untested edge cases.</p>
+      </div>
+      <div class="card">
+        <h3>Spec Team Toolkit</h3>
+        <p>Builds the customer-facing High Level Design and the developer-facing Low Level Design
+          that feed both the dev and QA pipelines.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:1.75rem">The two documented in depth here are the Inspector and the Mobile
+      Dev Plugin, because they are the pair joined by the Repository Knowledge contract. The QA
+      plugin and the Spec toolkit participate in the same feature lifecycle but do not yet consume
+      that contract.</p>
+
+    <div class="he">
+      <span class="tag">עברית · מערכת הפלאגינים</span>
+      <p>ארבעה פלאגינים מופצים דרך מרקטפלייס פנימי אחד. המפתח מוסיף את המרקטפלייס פעם אחת ומתקין
+        מתוכו כל פלאגין, דרך HTTPS וללא צורך במפתחות SSH.</p>
+      <ul>
+        <li><strong>Project Inspector</strong> — קורא מאגר קוד קיים ובונה עליו בסיס ידע מאושר. אינו
+          משנה קוד מקור אף פעם.</li>
+        <li><strong>Mobile Dev Plugin</strong> — צינור פיתוח בן שמונה שלבים, עם שער אישור אנושי בין
+          כל שני שלבים. צורך את הידע של ה־Inspector במקום לגזור אותו מחדש.</li>
+        <li><strong>QA Plugin</strong> — כותב תוכניות בדיקה במקביל לפיתוח ומשווה אותן למסמכי המסירה.</li>
+        <li><strong>Spec Team Toolkit</strong> — בונה מסמכי HLD ו־LLD שמזינים את שני הצינורות.</li>
+      </ul>
+      <p>שני הראשונים מתועדים כאן בהרחבה, מפני שהם הזוג שמחובר בחוזה ה־Repository Knowledge.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2. WHY ══ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">02</p>
+    <h2>Why Repository Knowledge exists</h2>
+    <p>Each plugin used to work out what the repository was, independently, every time it ran. The
+      same facts — which navigation library, which state manager, where the modules live, which
+      screens already exist — were derived up to five times, in different vocabularies, with nothing
+      reconciling them.</p>
+    <p>The cost was not wasted effort. It was three concrete failures:</p>
+
+    <div class="grid g3">
+      <div class="card accent-amber">
+        <h4>An unread inventory</h4>
+        <p>The component inventory exists specifically so a feature can reuse what already exists.
+          Nothing in the dev plugin read it, so the architect proposed new components without ever
+          seeing the list of existing ones.</p>
+      </div>
+      <div class="card accent-amber">
+        <h4>Findings that never arrived</h4>
+        <p>Audit findings a human had reviewed and approved were invisible to code review. They were
+          re-discovered, re-worded, or quietly contradicted.</p>
+      </div>
+      <div class="card accent-amber">
+        <h4>Facts frozen into documents</h4>
+        <p>Every feature analysis pasted in a snapshot of repository conventions. After the next
+          refactor that snapshot was wrong — while three later stages were told to trust it.</p>
+      </div>
+    </div>
+
+    <div class="ba">
+      <div class="ba-col old">
+        <div class="ba-head"><h3>Before</h3><span class="chip pend">Re-derived</span></div>
+        <div class="ba-body">
+          <ul>
+            <li><span class="mk bad">✕</span><span>Knowledge derived <strong>2–5 times</strong>, never reconciled</span></li>
+            <li><span class="mk bad">✕</span><span>Full stack inventory re-scanned on <strong>every</strong> command</span></li>
+            <li><span class="mk bad">✕</span><span>Approved documentation existed but <strong>nothing read it</strong></span></li>
+            <li><span class="mk bad">✕</span><span>Documents embedded <strong>verbatim snapshots</strong> that went stale silently</span></li>
+            <li><span class="mk bad">✕</span><span>No way to tell whether a document's repository facts were still true</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="ba-col new">
+        <div class="ba-head"><h3>After</h3><span class="chip ok">Derived once</span></div>
+        <div class="ba-body">
+          <ul>
+            <li><span class="mk good">✓</span><span>Derived <strong>once</strong>, human-approved, published as a contract</span></li>
+            <li><span class="mk good">✓</span><span>Reused when covered; only genuine <strong>gaps</strong> derived live</span></li>
+            <li><span class="mk good">✓</span><span>Approved documentation is the <strong>source</strong> every stage reads</span></li>
+            <li><span class="mk good">✓</span><span>Documents carry <strong>citations</strong> — path, section, fingerprint</span></li>
+            <li><span class="mk good">✓</span><span>Staleness detected <strong>per document</strong> and reported, never guessed around</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · למה זה קיים</span>
+      <p>בעבר כל פלאגין גזר בעצמו את הידע על המאגר, בכל הרצה מחדש. אותן עובדות נגזרו עד חמש פעמים,
+        באוצר מילים שונה, בלי שדבר יאחד ביניהן. המחיר לא היה בזבוז זמן אלא שלוש תקלות ממשיות:</p>
+      <ul>
+        <li><strong>מלאי רכיבים שלא נקרא</strong> — קיים מסמך שמפרט מה כבר בנוי, כדי שפיצ'ר חדש
+          יעשה בו שימוש חוזר. אף רכיב בפלאגין הפיתוח לא קרא אותו.</li>
+        <li><strong>ממצאים שלא הגיעו ליעדם</strong> — ממצאי אודיט שאדם בדק ואישר לא היו נראים
+          בסקירת הקוד, ולכן גולו מחדש או אף נסתרו.</li>
+        <li><strong>עובדות שהוקפאו לתוך מסמכים</strong> — כל ניתוח פיצ'ר הדביק בתוכו תצלום־רגע של
+          מוסכמות המאגר. אחרי הריפקטור הבא הוא היה שגוי, ושלושה שלבים אחריו הונחו לסמוך עליו.</li>
+      </ul>
+      <p><strong>אחרי השינוי:</strong> הידע נגזר פעם אחת, מאושר בידי אדם, ומפורסם כחוזה. מסמכים
+        מפנים אליו במקום להעתיק אותו, ואי־עדכניות מזוהה ומדווחת ברמת המסמך הבודד.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. HOW THE PLUGINS COOPERATE ══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">03</p>
+    <h2>How the plugins cooperate</h2>
+    <p>One question each. The Inspector answers <em>what is this repository?</em> The Dev Plugin
+      answers <em>what are we changing, and how?</em> Nothing flows back upward: the Inspector never
+      reads a feature document, and no consumer ever writes an Inspector-owned artifact.</p>
+
+    <div class="split">
+      <div class="pane p">
+        <h3>Project Inspector <span class="chip info">Producer</span></h3>
+        <p class="sub">Owns: what the repository <em>is</em></p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Derive repository knowledge once, under human approval</li>
+          <li>Identity, stack, build and test commands</li>
+          <li>Structure, module map, entry points</li>
+          <li>Component inventory and coding conventions</li>
+          <li>Integrations and environment variable names</li>
+          <li>Audit topic index and its approval state</li>
+        </ul>
+        <h4>Produces</h4>
+        <ul>
+          <li><code>CLAUDE.md</code> — compact project context</li>
+          <li><code>AUDIT.md</code> — audit topic index</li>
+          <li><code>docs/project/</code> — overview, components, patterns, integrations</li>
+          <li><code>audits/</code> — one reviewed document per topic</li>
+          <li><code>.ono/repo-knowledge.json</code> — the derived index</li>
+        </ul>
+        <h4>Never</h4>
+        <ul>
+          <li>Modifies source code</li>
+          <li>Reads a feature document</li>
+          <li>Decides anything about a feature</li>
+        </ul>
+      </div>
+      <div class="pane c">
+        <h3>Mobile Dev Plugin <span class="chip info">Consumer</span></h3>
+        <p class="sub">Owns: what we are <em>changing</em></p>
+        <h4>Responsibilities</h4>
+        <ul>
+          <li>Decide platform and device type per feature, with a human</li>
+          <li>The design reference for a feature</li>
+          <li>Technical approach and design document</li>
+          <li>Task decomposition and implementation</li>
+          <li>Reviews and per-diff file attribution</li>
+          <li>Judging the repository against our architecture standards</li>
+        </ul>
+        <h4>Consumes</h4>
+        <ul>
+          <li><code>.ono/repo-knowledge.json</code> — through one component only</li>
+          <li><code>docs/project/patterns.md</code> — conventions, cited by section</li>
+          <li><code>docs/project/components.md</code> — inventory, read before proposing anything new</li>
+          <li><code>docs/project/integrations.md</code> — services and SDKs</li>
+          <li><code>CLAUDE.md</code> — structure, via fixed pointers</li>
+        </ul>
+        <h4>Never</h4>
+        <ul>
+          <li>Writes an Inspector-owned artifact</li>
+          <li>Treats the manifest's platform hints as authoritative</li>
+          <li>Resolves device type from the manifest</li>
+          <li>Repairs stale knowledge — it reports and recommends a refresh</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout steel">
+      <p class="h">The boundary that matters most</p>
+      <p>It is not producer-versus-consumer. It is <strong>observations versus decisions</strong>.
+        What the repository <em>is</em> can be derived once and shared. What we have <em>decided</em>
+        about a feature — which platform, which device type — belongs to the moment a human confirmed
+        it, and must never be inferred from shared data. The manifest deliberately has no single
+        authoritative platform field, so it cannot be misread as one.</p>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · חלוקת האחריות</span>
+      <p>שאלה אחת לכל פלאגין. ה־Inspector עונה על <strong>מה המאגר הזה</strong>; פלאגין הפיתוח עונה
+        על <strong>מה אנחנו משנים וכיצד</strong>. הזרימה חד־כיוונית: ה־Inspector אינו קורא מסמכי
+        פיצ'ר, וצרכן אינו כותב לעולם לארטיפקט שבבעלות ה־Inspector.</p>
+      <p><strong>הגבול החשוב באמת אינו יצרן־מול־צרכן אלא תצפיות מול החלטות.</strong> מה שהמאגר
+        <em>הוא</em> ניתן לגזירה פעם אחת ולשיתוף. מה שהוחלט על פיצ'ר — איזו פלטפורמה, איזה סוג מכשיר
+        — שייך לרגע שבו אדם אישר זאת, ואסור להסיק אותו מנתונים משותפים. לכן ה־manifest אינו מכיל שדה
+        פלטפורמה מחייב אחד, כדי שלא ייקרא בטעות ככזה.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. THE KNOWLEDGE PIPELINE ══ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">04</p>
+    <h2>Repository Knowledge, stage by stage</h2>
+    <p>Knowledge is produced at the top and consumed below. Steel-edged stages belong to the
+      Inspector; green-edged stages belong to the Dev Plugin.</p>
+
+    <div class="flow">
+      <div class="node owner-p">
+        <div class="idx">01</div>
+        <div class="body">
+          <h4>Project scan</h4>
+          <p class="who">Project Inspector · <code>/inspect</code></p>
+          <p>Reads the repository once, with a human approval gate at every stage. Produces the
+            baseline context and the audit topic index. Nothing is automatic or silent.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-p">
+        <div class="idx">02</div>
+        <div class="body">
+          <h4>Approved repository documentation</h4>
+          <p class="who">Project Inspector · reviewed artifacts</p>
+          <p><code>CLAUDE.md</code>, <code>AUDIT.md</code> and the <code>docs/project/</code>
+            knowledge base. A person reviewed each one. These remain the source of truth; nothing
+            downstream replaces them.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-p">
+        <div class="idx">03</div>
+        <div class="body">
+          <h4><code>repo-knowledge.json</code></h4>
+          <p class="who">Project Inspector · derived index</p>
+          <p>A machine-readable <em>index over</em> those documents — never a second copy. It holds
+            paths and section anchors, a fingerprint (commit plus per-document hash), and a
+            per-category coverage rating of <code>populated</code>, <code>partial</code> or
+            <code>unknown</code>. It reads no source code, so the review that approved the documents
+            also covers this.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-c">
+        <div class="idx">04</div>
+        <div class="body">
+          <h4><code>/analyze-feature</code> → Feature Analysis</h4>
+          <p class="who">Mobile Dev Plugin</p>
+          <p>Resolves the manifest before detecting anything, reuses what it covers, derives the
+            rest live, then asks a human to confirm exactly one platform and one device type. The
+            analysis records the confirmed decisions and <em>cites</em> knowledge by path, section
+            and fingerprint.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-c">
+        <div class="idx">05</div>
+        <div class="body">
+          <h4><code>/dev-design-start</code> → Design Document</h4>
+          <p class="who">Mobile Dev Plugin</p>
+          <p>Re-resolves knowledge at design time, because the repository may have moved since the
+            analysis was approved. Reads the approved documents first and inspects source only for
+            what they cannot contain — the actual signatures and call sites of the components this
+            feature touches.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-c">
+        <div class="idx">06</div>
+        <div class="body">
+          <h4><code>/dev-feature-start</code> → Task Breakdown</h4>
+          <p class="who">Mobile Dev Plugin</p>
+          <p>Decomposes the approved design into individually reviewable, testable and revertible
+            tasks, each carrying the feature's single confirmed platform.</p>
+        </div>
+      </div>
+      <div class="arrow"></div>
+      <div class="node owner-c">
+        <div class="idx">07</div>
+        <div class="body">
+          <h4><code>/implement-task</code> → Implementation</h4>
+          <p class="who">Mobile Dev Plugin</p>
+          <p>Implements exactly one task, resolving the whole approved chain from document links
+            rather than guessing filenames.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · צינור הידע</span>
+      <p>הידע נוצר למעלה ונצרך למטה. שלבים בקו כחול שייכים ל־Inspector; שלבים בקו ירוק שייכים
+        לפלאגין הפיתוח.</p>
+      <ul>
+        <li><strong>סריקת הפרויקט</strong> — קריאה אחת של המאגר, עם שער אישור אנושי בכל שלב.</li>
+        <li><strong>תיעוד מאושר</strong> — <code>CLAUDE.md</code>, <code>AUDIT.md</code> ובסיס הידע
+          התיאורי. אדם בדק כל אחד מהם, והם נשארים מקור האמת.</li>
+        <li><strong>קובץ ה־manifest</strong> — אינדקס קריא־למכונה <em>מעל</em> אותם מסמכים, ולא
+          העתק שני שלהם. מכיל נתיבים, עוגני־מקטע, חתימת רעננות ודירוג כיסוי לכל קטגוריה.</li>
+        <li><strong>ניתוח הפיצ'ר</strong> — פותר את ה־manifest לפני כל זיהוי, ומבקש מאדם לאשר
+          פלטפורמה אחת וסוג מכשיר אחד. הניתוח מצטט ידע ואינו מעתיק אותו.</li>
+        <li><strong>מסמך העיצוב</strong> — פותר את הידע מחדש, כי המאגר עשוי להיות שונה מאז שהניתוח
+          אושר. קורא קוד מקור רק למה שהמסמכים אינם יכולים להכיל.</li>
+        <li><strong>פירוק למשימות ומימוש</strong> — משימות בדידות שניתן לסקור, לבדוק ולבטל כל אחת
+          בנפרד, ולאחריהן מימוש של משימה אחת בכל פעם.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. WHAT THE MANIFEST HOLDS ══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">05</p>
+    <h2>What the manifest holds — and deliberately does not</h2>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Category</th><th>Backed by</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td><code>stack</code></td><td><code>CLAUDE.md</code></td><td>Languages, frameworks, tooling, package managers</td></tr>
+          <tr><td><code>commands</code></td><td><code>CLAUDE.md</code></td><td>Install, run, test, build</td></tr>
+          <tr><td><code>structure</code></td><td><code>CLAUDE.md</code></td><td>Repository tree, key modules, entry points</td></tr>
+          <tr><td><code>inventory</code></td><td><code>docs/project/components.md</code></td><td>Existing screens, components, hooks — reuse before creating</td></tr>
+          <tr><td><code>conventions</code></td><td><code>docs/project/patterns.md</code></td><td>State, API, navigation, styling, errors, i18n, naming, testing</td></tr>
+          <tr><td><code>integrations</code></td><td><code>docs/project/integrations.md</code></td><td>Services, SDKs, environment variable names</td></tr>
+          <tr><td><code>auditTopics</code></td><td><code>AUDIT.md</code></td><td>Which topics exist and their approval status</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:2rem">Deliberately excluded</h3>
+    <div class="grid g2">
+      <div class="card accent-amber">
+        <h4>Audit findings</h4>
+        <p>Only the topic <em>index</em> is carried — never a finding's body. Feeding approved
+          findings into code review is a separate, larger piece of work.</p>
+      </div>
+      <div class="card accent-amber">
+        <h4>Platform authority</h4>
+        <p>Advisory hints only. There is no single authoritative platform field, because platform is
+          a human decision per feature.</p>
+      </div>
+      <div class="card accent-amber">
+        <h4>Device information</h4>
+        <p>Nothing at all. Mobile-versus-TV is resolved live for every feature.</p>
+      </div>
+      <div class="card accent-amber">
+        <h4>Task lifecycle state</h4>
+        <p>Out of scope. The manifest describes the repository, not the work in flight.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2rem">Freshness, and honest degradation</h3>
+    <p>The manifest records the commit it was built from and a hash per source document. A consumer
+      compares both, producing one of four verdicts, evaluated in this order:</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Verdict</th><th>Meaning</th><th>Consumer behaviour</th></tr></thead>
+        <tbody>
+          <tr><td><code>stale-artifacts</code></td><td>A source document changed</td><td>Derive the affected categories live; keep the rest</td></tr>
+          <tr><td><code>unknown</code></td><td>Freshness could not be established</td><td>Use as-is, report that</td></tr>
+          <tr><td><code>stale-head</code></td><td>Commit moved, documents unchanged</td><td>Use as-is, note how far behind</td></tr>
+          <tr><td><code>fresh</code></td><td>Everything matches</td><td>Trust every covered category</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:1.25rem">Staleness is attributed <strong>per document</strong>, so editing
+      one approved file demotes only the category it backs. And a category that cannot be determined
+      is reported <code>unknown</code> rather than guessed — failure degrades to <em>no better than
+      before</em>, never to <em>wrong</em>.</p>
+
+    <div class="callout steel">
+      <p class="h">The property everything else rests on</p>
+      <p><strong>The manifest is optional.</strong> A repository that has never been inspected
+        behaves exactly as it did before — same prompts, same detection, same output, plus one
+        informational line. Nothing stops, and nobody is asked to run an inspection first.</p>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · מה נשמר ומה לא</span>
+      <p>ה־manifest מכסה שבע קטגוריות: <code>stack</code>, <code>commands</code>,
+        <code>structure</code>, <code>inventory</code>, <code>conventions</code>,
+        <code>integrations</code> ו־<code>auditTopics</code>, כל אחת נשענת על מסמך מאושר מסוים.</p>
+      <p><strong>מה שלא נשמר בכוונה:</strong> גוף ממצאי האודיט (רק האינדקס), סמכות פלטפורמה
+        (רמזים מייעצים בלבד), מידע על סוג מכשיר (כלל לא), ומצב מחזור־חיים של משימות.</p>
+      <p><strong>רעננות:</strong> נשמרים ה־commit וחתימה לכל מסמך. אי־עדכניות מיוחסת ברמת המסמך
+        הבודד, כך שעריכת מסמך אחד מורידה רק את הקטגוריה שנשענת עליו. קטגוריה שלא ניתן לקבוע מדווחת
+        כ־<code>unknown</code> ולא מנוחשת — כשל מוביל למצב שאינו גרוע מהמצב הקודם, ולא למצב שגוי.</p>
+      <p><strong>התכונה שהכול נשען עליה:</strong> ה־manifest אופציונלי. מאגר שלא נסרק מעולם מתנהג
+        בדיוק כפי שהתנהג קודם, בתוספת שורת מידע אחת. שום דבר אינו נעצר.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. THE FULL WORKFLOW ══ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">06</p>
+    <h2>The complete Claude Code workflow</h2>
+    <p>From an uninspected repository to a change ready for merge. The first two commands run once
+      per repository and are refreshed occasionally; the rest run once per feature. Every stage
+      carries a human approval gate.</p>
+
+    <div class="chain">
+      <div class="step">
+        <span class="cmd">/inspect</span><span class="plugin">Project Inspector</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Build the repository's approved knowledge base, one gated stage at a time.</dd>
+          <dt>Inputs</dt><dd>A repository path.</dd>
+          <dt>Outputs</dt><dd><code>CLAUDE.md</code>, <code>AUDIT.md</code>, <code>docs/project/*</code>, per-topic audits, and the knowledge manifest.</dd>
+          <dt>Next</dt><dd><code>/inspect-sync</code>, or straight to <code>/analyze-feature</code>.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/inspect-sync</span><span class="plugin">Project Inspector</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Maintenance. Refresh the manifest and fold newly approved findings into the project context.</dd>
+          <dt>Inputs</dt><dd>The existing approved artifacts.</dd>
+          <dt>Outputs</dt><dd>Refreshed manifest and updated context blocks.</dd>
+          <dt>Next</dt><dd><code>/analyze-feature</code>. Re-run whenever the repository has moved on.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/analyze-feature</span><span class="plugin">Mobile Dev Plugin</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Propose an approach grounded in what the repository actually is, and confirm the platform with a human.</dd>
+          <dt>Inputs</dt><dd>A feature description, a design reference when the feature changes UI, and the manifest when one exists.</dd>
+          <dt>Outputs</dt><dd>A Feature Analysis citing repository knowledge, marked <code>proposed</code>.</dd>
+          <dt>Next</dt><dd>A human marks it <code>approved</code>, then <code>/dev-design-start</code>.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/dev-design-start</span><span class="plugin">Mobile Dev Plugin</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Turn the approved analysis into a Detailed Design.</dd>
+          <dt>Inputs</dt><dd>The approved Feature Analysis, its design reference, and freshly resolved knowledge.</dd>
+          <dt>Outputs</dt><dd>A Design Document with a knowledge reference section, marked <code>draft</code>.</dd>
+          <dt>Next</dt><dd>A human approves it, then <code>/dev-feature-start</code>.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/dev-feature-start</span><span class="plugin">Mobile Dev Plugin</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Decompose the approved design into implementable tasks and a delivery plan.</dd>
+          <dt>Inputs</dt><dd>The approved Design Document.</dd>
+          <dt>Outputs</dt><dd>A Task Breakdown and a thin feature plan, both <code>draft</code>.</dd>
+          <dt>Next</dt><dd>A human approves both, then <code>/implement-task</code>.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/implement-task</span><span class="plugin">Mobile Dev Plugin</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Implement exactly one approved task.</dd>
+          <dt>Inputs</dt><dd>A feature name and task id; the approved chain resolved from document links.</dd>
+          <dt>Outputs</dt><dd>Code changes plus a structured completion report.</dd>
+          <dt>Next</dt><dd>The next task, or the review steps once the feature is complete.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/review-code</span> <span class="cmd">/review-security</span><span class="plugin">Review</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Review the change against shared and platform-specific standards, and separately for security risk.</dd>
+          <dt>Inputs</dt><dd>The current diff against the base branch.</dd>
+          <dt>Outputs</dt><dd>Review documents with findings cited against standard IDs.</dd>
+          <dt>Next</dt><dd><code>/fix-review-comments</code> if anything was found.</dd>
+        </dl>
+      </div>
+      <div class="step">
+        <span class="cmd">/fix-review-comments</span><span class="plugin">Review</span>
+        <dl class="io">
+          <dt>Purpose</dt><dd>Root-cause each finding and apply a minimal fix.</dd>
+          <dt>Inputs</dt><dd>A completed review document.</dd>
+          <dt>Outputs</dt><dd>Fixes plus a log of what was and was not addressed.</dd>
+          <dt>Next</dt><dd><code>/create-dev-qa-notes</code>, then <code>/prepare-mobile-release</code>.</dd>
+        </dl>
+      </div>
+      <div class="step term">
+        <span class="cmd">Ready for merge</span>
+        <dl class="io">
+          <dt>Gate</dt><dd>Every stage above carries a human approval. A change arrives here only once each one has been signed off.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <h3 style="margin-top:2.25rem">How information flows between commands</h3>
+    <p>Each stage reads the previous stage's <em>approved</em> output — never a live re-derivation.
+      Two kinds of information travel along the chain, and the distinction matters:</p>
+    <div class="grid g2">
+      <div class="card accent-green">
+        <h4>Decisions — copied forward</h4>
+        <p>The confirmed platform, the device type, and the design reference are copied verbatim from
+          one document to the next and never re-detected. A human confirmed them once; re-deriving
+          them later would silently overrule that.</p>
+      </div>
+      <div class="card accent">
+        <h4>Observations — cited, not copied</h4>
+        <p>Repository conventions, the module map and the component inventory are recorded as a path,
+          a section anchor and a fingerprint. A later reader resolves the citation and can tell
+          whether the source has moved since.</p>
+      </div>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · זרימת העבודה המלאה</span>
+      <p>שתי הפקודות הראשונות רצות פעם אחת לכל מאגר ומרועננות מדי פעם; כל השאר רצות פעם אחת לכל
+        פיצ'ר. בכל שלב יש שער אישור אנושי, וכל שלב קורא את הפלט <strong>המאושר</strong> של השלב
+        שלפניו — לא גזירה חיה מחדש.</p>
+      <p>שני סוגי מידע נעים בשרשרת, וההבדל ביניהם מהותי:</p>
+      <ul>
+        <li><strong>החלטות מועברות בהעתקה</strong> — הפלטפורמה המאושרת, סוג המכשיר והפניית העיצוב
+          מועתקות מילה במילה ממסמך למסמך ואינן מזוהות מחדש. אדם אישר אותן פעם אחת.</li>
+        <li><strong>תצפיות מצוטטות ואינן מועתקות</strong> — מוסכמות המאגר, מפת המודולים ומלאי
+          הרכיבים נרשמים כנתיב, עוגן־מקטע וחתימה. קורא מאוחר יכול לפתור את הציטוט ולראות אם המקור
+          השתנה מאז.</li>
+      </ul>
+      <p><strong>אם המאגר לא נסרק מעולם</strong> — דלגו על שתי הפקודות הראשונות. השאר יתנהג בדיוק
+        כמו קודם.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7. LESSONS ══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">07</p>
+    <h2>Design principles worth keeping</h2>
+    <p>Four conclusions from building this that generalise to the next plugin.</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3>Separate observations from decisions</h3>
+        <p>The useful split was not producer-versus-consumer but <strong>observations versus
+          decisions</strong>. What a repository <em>is</em> can be shared. What we have
+          <em>decided</em> belongs to the moment a human confirmed it. Encode that structurally — the
+          absence of an authoritative platform field is what prevents the mistake.</p>
+      </div>
+      <div class="card">
+        <h3>Honest degradation, enforced per fact</h3>
+        <p>Reporting <code>unknown</code> rather than guessing is what makes shared knowledge safe to
+          trust. Stating the rule once is not enough: each derivation has to be checked against it
+          individually. Failure must degrade to <em>no better than before</em>, never to
+          <em>wrong</em>.</p>
+      </div>
+      <div class="card">
+        <h3>Consistency across agents is a contract problem</h3>
+        <p>Where several documents carry the same fields and several components read the same
+          summary, every inconsistency took one form: a document listing a <em>subset</em> of
+          something that had since grown. Two habits fix it — point at one authoritative definition
+          instead of restating it, and forward whole outputs instead of enumerated parts.</p>
+      </div>
+      <div class="card">
+        <h3>Optional beats required</h3>
+        <p>Making the manifest optional rather than a prerequisite is why this could ship without
+          coordinating two plugins' releases. Either can be installed alone. That constraint shaped
+          the reader's design: it always succeeds, so no caller can mistake a missing manifest for an
+          error.</p>
+      </div>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · עקרונות עיצוב</span>
+      <ul>
+        <li><strong>הפרדת תצפיות מהחלטות</strong> — לא יצרן מול צרכן. מה שהמאגר הוא ניתן לשיתוף; מה
+          שהוחלט שייך לרגע האישור האנושי. כדאי לקבע זאת במבנה עצמו.</li>
+        <li><strong>הידרדרות כשלית כנה, ברמת העובדה הבודדת</strong> — דיווח <code>unknown</code>
+          במקום ניחוש הוא מה שמאפשר לסמוך על ידע משותף. אמירת הכלל פעם אחת אינה מספיקה; יש לבדוק כל
+          גזירה מולו בנפרד.</li>
+        <li><strong>עקביות בין סוכנים היא בעיית חוזה</strong> — כל אי־התאמה שנמצאה הייתה מסמך
+          שמפרט <em>תת־קבוצה</em> של משהו שגדל מאז. שני הרגלים פותרים זאת: להפנות להגדרה אחת מחייבת
+          במקום לחזור עליה, ולהעביר פלט שלם במקום חלקים מנויים.</li>
+        <li><strong>אופציונלי עדיף על נדרש</strong> — העובדה שה־manifest אופציונלי היא מה שאיפשר
+          לשחרר בלי לתאם גרסאות בין שני פלאגינים.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 8. WHERE TO GO NEXT ══ -->
+<section class="band">
+  <div class="wrap">
+    <p class="eyebrow">08</p>
+    <h2>Where to find more detail</h2>
+    <p>This document is the entry point. Everything below supports it rather than repeating it — each
+      answers a question this overview deliberately does not.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Document</th><th>Answers</th><th>Location</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Repository Knowledge contract</strong></td>
+            <td>The exact schema, what the producer guarantees, and the obligations a consumer accepts. Read this before writing a new consumer.</td>
+            <td><code>docs/repo-knowledge-contract.md</code><br><span class="note">in both plugins, byte-identical by design</span></td>
+          </tr>
+          <tr>
+            <td><strong>Inspector plugin architecture</strong></td>
+            <td>How the Inspector is built: registry-driven orchestration, skill types, approval gates, hooks, deterministic scripts, state and resume, worktree safety.</td>
+            <td><code>ono-plugin-project-inspector/docs/architecture/plugin-architecture.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Inspection workflow</strong></td>
+            <td>What to type and in what order to inspect a repository, and what each of the five commands does.</td>
+            <td><code>ono-plugin-project-inspector/docs/workflows/inspection-workflow.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Mobile Dev Plugin README</strong></td>
+            <td>The eight-stage pipeline, platform detection and routing, standards and templates.</td>
+            <td><code>ono-mobile-dev-plugin/README.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Encapsulation specification</strong></td>
+            <td>Why it is built this way: the full ecosystem review, every duplication found, the ownership model, and the alternatives considered and rejected.</td>
+            <td><code>docs/specs/repo-knowledge-encapsulation.md</code></td>
+          </tr>
+          <tr>
+            <td><strong>Implementation plan</strong></td>
+            <td>Exactly what was built, task by task, with verification commands. Amended as it was executed, so it matches reality.</td>
+            <td><code>docs/plans/repo-knowledge-mvp-implementation.md</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout steel">
+      <p class="h">If you are extending the ecosystem</p>
+      <p>To add a consumer: read the contract, then note its two hardest obligations — parse the
+        manifest in exactly one component, and never let it fail a command. To add a stage to the
+        Inspector: read its architecture document; a stage that fits an existing shape is a registry
+        entry plus a skill folder, with no orchestrator change.</p>
+    </div>
+
+    <div class="he">
+      <span class="tag">עברית · לאן להמשיך</span>
+      <p>מסמך זה הוא נקודת הכניסה, וכל השאר תומך בו ואינו חוזר עליו:</p>
+      <ul>
+        <li><strong>חוזה ה־Repository Knowledge</strong> — הסכימה המדויקת, ההתחייבויות של היצרן
+          והחובות של הצרכן. חובה לקרוא לפני כתיבת צרכן חדש.</li>
+        <li><strong>ארכיטקטורת ה־Inspector</strong> — כיצד הפלאגין בנוי: תזמור מונחה־רגיסטרי, סוגי
+          מיומנויות, שערי אישור, hooks, סקריפטים דטרמיניסטיים, מצב והמשכה.</li>
+        <li><strong>זרימת הסריקה</strong> — מה להקליד ובאיזה סדר, ומה עושה כל אחת מחמש הפקודות.</li>
+        <li><strong>מפרט ההכללה</strong> — מדוע זה בנוי כך: הסקירה המלאה, הכפילויות שנמצאו, מודל
+          הבעלות והחלופות שנשקלו ונדחו.</li>
+        <li><strong>תוכנית המימוש</strong> — מה נבנה בפועל, משימה אחר משימה, כולל פקודות אימות.</li>
+      </ul>
+      <p><strong>להוספת צרכן חדש:</strong> קראו את החוזה, ושימו לב לשתי החובות הקשות — לנתח את
+        ה־manifest ברכיב אחד בלבד, ולעולם לא לאפשר לו להכשיל פקודה.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><strong>OnO Plugin Ecosystem</strong> — documentation entry point. Producer:
+      <code>ono-plugin-project-inspector</code>. Consumer: <code>ono-mobile-dev-plugin</code>.
+      Repository Knowledge contract schema v1.</p>
+    <p class="note" style="margin-top:.75rem" dir="rtl">מסמך זה הוא נקודת הכניסה לתיעוד של מערכת
+      הפלאגינים של OnO. כל מסמך אחר תומך בו ואינו משכפל אותו.</p>
+  </div>
+</footer>
+
+</body>
+</html>
