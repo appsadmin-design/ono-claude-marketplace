@@ -792,17 +792,17 @@ footer p{max-width:70ch}
           <tr>
             <td><strong>Repository Knowledge contract</strong></td>
             <td>The exact schema, what the producer guarantees, and the obligations a consumer accepts. Read this before writing a new consumer.</td>
-            <td><code>docs/repo-knowledge-contract.md</code><br><span class="note">in both plugins, byte-identical by design</span></td>
+            <td><code>docs/repo-knowledge-contract.md</code><br><span class="note">in each plugin repository, byte-identical by design — it ships alongside the code that implements it</span></td>
           </tr>
           <tr>
             <td><strong>Inspector plugin architecture</strong></td>
             <td>How the Inspector is built: registry-driven orchestration, skill types, approval gates, hooks, deterministic scripts, state and resume, worktree safety.</td>
-            <td><code>ono-plugin-project-inspector/docs/architecture/plugin-architecture.md</code></td>
+            <td><code>docs/plugins/ono-plugin-project-inspector/plugin-architecture.md</code><br><span class="note">this repository</span></td>
           </tr>
           <tr>
             <td><strong>Inspection workflow</strong></td>
             <td>What to type and in what order to inspect a repository, and what each of the five commands does.</td>
-            <td><code>ono-plugin-project-inspector/docs/workflows/inspection-workflow.md</code></td>
+            <td><code>docs/plugins/ono-plugin-project-inspector/inspection-workflow.md</code><br><span class="note">this repository</span></td>
           </tr>
           <tr>
             <td><strong>Mobile Dev Plugin README</strong></td>
@@ -833,7 +833,8 @@ footer p{max-width:70ch}
 
     <div class="he">
       <span class="tag">עברית · לאן להמשיך</span>
-      <p>מסמך זה הוא נקודת הכניסה, וכל השאר תומך בו ואינו חוזר עליו:</p>
+      <p>מסמך זה הוא נקודת הכניסה, וכל השאר תומך בו ואינו חוזר עליו. כל תיעוד הארכיטקטורה מרוכז
+        במאגר ה־marketplace; במאגר של כל פלאגין נשאר רק ה־README והתיעוד הדרוש לבנייה ולתרומה:</p>
       <ul>
         <li><strong>חוזה ה־Repository Knowledge</strong> — הסכימה המדויקת, ההתחייבויות של היצרן
           והחובות של הצרכן. חובה לקרוא לפני כתיבת צרכן חדש.</li>

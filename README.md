@@ -4,7 +4,11 @@ Internal [Claude Code](https://code.claude.com) plugin marketplace maintained by
 
 Add this marketplace to Claude Code once, then install any Ono plugin from it.
 
-This repository also hosts the **ecosystem documentation** — the material that describes how the plugins fit together rather than any single plugin:
+## Documentation
+
+This repository is the **single source of truth for all architecture and technical documentation** across the plugin ecosystem. Each plugin repository keeps only its README and whatever is needed to build, run or contribute to that plugin.
+
+### Ecosystem
 
 | Document | Answers |
 | --- | --- |
@@ -12,7 +16,18 @@ This repository also hosts the **ecosystem documentation** — the material that
 | [`docs/specs/repo-knowledge-encapsulation.md`](docs/specs/repo-knowledge-encapsulation.md) | Why it is built this way: the ecosystem review, every duplication found, the ownership model, and the alternatives rejected. |
 | [`docs/plans/repo-knowledge-mvp-implementation.md`](docs/plans/repo-knowledge-mvp-implementation.md) | What was built, task by task, with verification commands. Amended as it was executed, so it matches reality. |
 
-Documentation for an individual plugin lives in that plugin's own repository.
+### Per plugin
+
+| Document | Answers |
+| --- | --- |
+| [`docs/plugins/ono-plugin-project-inspector/plugin-architecture.md`](docs/plugins/ono-plugin-project-inspector/plugin-architecture.md) | How the Project Inspector is built: registry-driven orchestration, skill types, approval gates, hooks, deterministic scripts, state and resume, worktree safety. |
+| [`docs/plugins/ono-plugin-project-inspector/inspection-workflow.md`](docs/plugins/ono-plugin-project-inspector/inspection-workflow.md) | What to type to inspect a repository, in what order, and what each of the five commands does. |
+
+Paths inside a per-plugin document (`skills/`, `agents/`, `scripts/`, `commands/`) are relative to that **plugin's** repository, not to this one.
+
+### Stays in the plugin repositories
+
+`docs/repo-knowledge-contract.md` ships inside **both** `ono-plugin-project-inspector` and `ono-mobile-dev-plugin`, byte-identically. It is deliberately not centralised here: Claude Code has no cross-plugin dependency mechanism, so vendoring it alongside the code that implements it is the only way both ends can ship the same pinned specification. The producer's `scripts/repo-knowledge.ts` and the consumer's `scripts/read-repo-knowledge.ts` and `repo-knowledge-consumer` skill all cite it by that path.
 
 ## Which plugin do I need?
 
