@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Ono internal Claude Code marketplace — plugins built and maintained by Ono Apps.",
-    "version": "1.4.0"
+    "version": "1.4.1"
   },
   "plugins": [
     {
@@ -18,7 +18,6 @@
         "ref": "main"
       },
       "description": "Inspects an existing software repository and gradually builds a structured, approval-gated AI knowledge base for it (CLAUDE.md, AUDIT.md, docs/project/, and per-topic audit documents) via a breakdown → approve loop, with an on-demand documentation-sync maintenance tool and resumable, fully registry-driven state tracking in .ono/state.json. Never modifies source code.",
-      "version": "0.7.0",
       "author": {
         "name": "Ono Apps",
         "email": "yagil@onoapps.com"
@@ -39,7 +38,6 @@
         "ref": "main"
       },
       "description": "Design-system generators for Figma: builds a complete two-tier color palette, spacing/scale tokens, and a two-platform typography system as Figma Variables and text styles via the Figma MCP, individually or as one orchestrated design-system run.",
-      "version": "0.1.0",
       "author": {
         "name": "Ono Apps",
         "email": "magen@onoapps.com"
@@ -52,8 +50,7 @@
         "url": "https://github.com/OnOAppsDev/ono-mobile-dev-plugin.git",
         "ref": "main"
       },
-      "description": "Mobile-division SDLC workflow for Ono Apps: feature analysis, dev planning, implementation, code review, debugging, QA handoff, and release readiness across React Native, native iOS, native Android, and React web, with shared process and platform-aware routing.",
-      "version": "0.2.0",
+      "description": "Mobile-division SDLC workflow for Ono Apps: feature analysis, detailed design, task breakdown, implementation, code review, debugging, QA handoff, and release readiness across React Native, native iOS, native Android, and React web, with shared process and platform-aware routing.",
       "author": {
         "name": "Ono Apps",
         "email": "magen@onoapps.com"
@@ -66,8 +63,7 @@
         "url": "https://github.com/OnOAppsDev/ono-plugin-qa.git",
         "ref": "main"
       },
-      "description": "Figma- and spec/LLD-grounded QA test planning, approval, sync, and dev/QA coverage gap analysis for Ono Apps' features across React, React Native, iOS, and Android, run in parallel with ono-mobile-dev-plugin.",
-      "version": "0.3.0",
+      "description": "Figma- and spec/LLD-grounded QA test planning, approval, sync, dev/QA coverage gap analysis, Appium automation generation, and live locator verification for Ono Apps' features across React, React Native, iOS, and Android, run in parallel with ono-mobile-dev-plugin.",
       "author": {
         "name": "Ono Apps",
         "email": "magen@onoapps.com"
@@ -81,7 +77,6 @@
         "ref": "main"
       },
       "description": "HLD and LLD document builders for the spec team: discovers and scopes a High Level Design with self-QA before customer delivery, and turns a Figma component into a two-part LLD spec for developers/QA.",
-      "version": "0.1.0",
       "author": {
         "name": "Ono Apps",
         "email": "magen@onoapps.com"

@@ -9,6 +9,37 @@ The version below is the marketplace's own `metadata.version` in
 a plugin is added, **patch** for any other change (renames, source
 swaps, or a listed plugin's own version bump).
 
+## [1.4.1] - 2026-09-08
+
+### Removed
+- **Per-plugin `version` fields**, from all five entries in
+  [`marketplace.json`](.claude-plugin/marketplace.json). Each plugin's version is owned by
+  its own `.claude-plugin/plugin.json`, and Claude Code reads it from there: when both
+  places declare a version, `plugin.json` wins **without warning**, so the copies here
+  could only ever mask the real value. Four of the five had already drifted — this
+  marketplace listed `ono-project-inspector` at 0.7.0 (actual 0.9.0),
+  `ono-mobile-dev-plugin` at 0.2.0 (actual 0.5.0), `ono-plugin-qa` at 0.3.0 (actual
+  0.7.0), and `spec-team-toolkit` at 0.1.0 (actual 0.2.0). Nothing detected it, because a
+  marketplace version that loses to `plugin.json` has no observable effect. Omitting the
+  field also restores update-on-`ref`-change for these git sources.
+- The **Version column** from the README's *Available plugins* table, and the sentence
+  claiming those numbers tracked the manifest, for the same reason: both could only ever
+  be stale copies. The README now says where to read a version instead.
+
+### Changed
+- `ono-mobile-dev-plugin`'s marketplace description, to match its own `plugin.json`: the
+  single "dev planning" stage became "detailed design, task breakdown" when that plugin
+  split `/create-dev-plan` into `/dev-design-start` and `/dev-feature-start`.
+- `ono-plugin-qa`'s marketplace description, to match its own `plugin.json` at 0.7.0,
+  which added Appium automation generation and live locator verification.
+- The README's `ono-mobile-dev-plugin` command table: removed `/create-dev-plan`, which no
+  longer exists, and added `/dev-design-start` and `/dev-feature-start`. Corrected
+  "seven-stage" to "eight-stage" to match the plugin's current pipeline.
+- *How it's wired* now records the metadata ownership boundary: this manifest owns `name`,
+  `source` and its own `metadata.version`; each plugin owns everything else, its `version`
+  above all. Marketplace-facing `description` stays a deliberate,
+  hand-maintained summary of the plugin's own.
+
 ## [1.4.0] - 2026-07-20
 
 ### Added

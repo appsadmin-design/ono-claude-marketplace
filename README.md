@@ -41,15 +41,19 @@ Paths inside a per-plugin document (`skills/`, `agents/`, `scripts/`, `commands/
 
 ## Available plugins
 
-| Plugin | Version | Description |
-| --- | --- | --- |
-| [`ono-project-inspector`](#ono-project-inspector) | 0.7.0 | Inspects an existing repository and gradually builds a structured, approval-gated AI knowledge base for it (`CLAUDE.md`, `AUDIT.md`, `docs/project/`, and per-topic audit documents), then syncs approved findings back into `CLAUDE.md`. **Never modifies source code.** |
-| [`ono-mobile-dev-plugin`](#ono-mobile-dev-plugin) | 0.2.0 | Mobile-division SDLC workflow for Ono Apps: feature analysis, dev planning, implementation, code review, debugging, QA handoff, and release readiness across React Native, native iOS, native Android, and React web, with shared process and platform-aware routing. |
-| [`ono-plugin-qa`](#ono-plugin-qa) | 0.3.0 | Figma- and spec/LLD-grounded QA test planning, approval, sync, and dev/QA coverage gap analysis for Ono Apps' features across React, React Native, iOS, and Android, run in parallel with `ono-mobile-dev-plugin`. |
-| [`spec-team-toolkit`](#spec-team-toolkit) | 0.1.0 | HLD and LLD document builders for the spec team: discovers and scopes a High Level Design with self-QA before customer delivery, and turns a Figma component into a two-part LLD spec for developers/QA. |
-| [`matrix-studio`](#matrix-studio) | 0.1.0 | Design-system generators for Figma: builds a complete two-tier color palette, spacing/scale tokens, and a two-platform typography system as Figma Variables and text styles via the Figma MCP, individually or as one orchestrated design-system run. |
+| Plugin | Description |
+| --- | --- |
+| [`ono-project-inspector`](#ono-project-inspector) | Inspects an existing repository and gradually builds a structured, approval-gated AI knowledge base for it (`CLAUDE.md`, `AUDIT.md`, `docs/project/`, and per-topic audit documents), then syncs approved findings back into `CLAUDE.md`. **Never modifies source code.** |
+| [`ono-mobile-dev-plugin`](#ono-mobile-dev-plugin) | Mobile-division SDLC workflow for Ono Apps: feature analysis, detailed design, task breakdown, implementation, code review, debugging, QA handoff, and release readiness across React Native, native iOS, native Android, and React web, with shared process and platform-aware routing. |
+| [`ono-plugin-qa`](#ono-plugin-qa) | Figma- and spec/LLD-grounded QA test planning, approval, sync, dev/QA coverage gap analysis, Appium automation generation, and live locator verification for Ono Apps' features across React, React Native, iOS, and Android, run in parallel with `ono-mobile-dev-plugin`. |
+| [`spec-team-toolkit`](#spec-team-toolkit) | HLD and LLD document builders for the spec team: discovers and scopes a High Level Design with self-QA before customer delivery, and turns a Figma component into a two-part LLD spec for developers/QA. |
+| [`matrix-studio`](#matrix-studio) | Design-system generators for Figma: builds a complete two-tier color palette, spacing/scale tokens, and a two-platform typography system as Figma Variables and text styles via the Figma MCP, individually or as one orchestrated design-system run. |
 
-Versions above track [`marketplace.json`](.claude-plugin/marketplace.json) at the time this README was last updated — see that file for the current source of truth.
+**There is deliberately no version column.** A plugin's version is owned by its own
+`.claude-plugin/plugin.json`, and Claude Code reads it from there — so a version listed
+here could only ever be a copy that goes stale. To see what a plugin is at, read its
+manifest in its own repository, or run `/plugin` after installing. The descriptions above
+are marketplace-facing summaries of each plugin's own `description`, maintained by hand.
 
 ## Install (developers)
 
@@ -100,12 +104,13 @@ Builds a structured, approval-gated AI knowledge base for an existing repo witho
 
 ### `ono-mobile-dev-plugin`
 
-Encodes Ono's seven-stage mobile SDLC, with an approval gate between stages and platform-aware routing for React Native, native iOS, native Android, and React web.
+Encodes Ono's eight-stage mobile SDLC, with an approval gate between stages and platform-aware routing for React Native, native iOS, native Android, and React web.
 
 | Command | What it does |
 | --- | --- |
 | `/analyze-feature` | Detects platform and proposes a technical approach |
-| `/create-dev-plan` | Converts an approved analysis into a dev plan + task breakdown |
+| `/dev-design-start` | Turns an approved analysis into a Detailed Design (DD) |
+| `/dev-feature-start` | Turns an approved DD into a task breakdown + feature plan |
 | `/implement-task` | Executes an individual task from the approved breakdown |
 | `/review-code` | Reviews for correctness, style, standards, and performance |
 | `/review-security` | Security-focused review with platform-specific concerns |
@@ -156,6 +161,7 @@ After new changes are published to a plugin or to this marketplace repo:
 
 - `.claude-plugin/marketplace.json` — the marketplace manifest. Each plugin entry uses an **HTTPS `url` source** pointing at the plugin's own repository (e.g. `https://github.com/OnOAppsDev/ono-plugin-project-inspector.git`). HTTPS is used (rather than a `github` source, which clones over SSH) so installs work on any machine without SSH keys configured.
 - Plugin code is **not** duplicated or symlinked into this repo. It lives only in its own repository; Claude Code fetches it from GitHub on install.
+- **Plugin versions are not declared here.** Each entry carries only `name`, `source`, and marketplace-facing `description`/`author`. A plugin's `version` lives in its own `.claude-plugin/plugin.json`, which is what Claude Code uses — the docs are explicit that when both declare a version, `plugin.json` wins *without warning*, so a copy here could silently mask the real one. Omitting it also means git-sourced plugins update whenever their tracked `ref` moves, rather than only when someone remembers to edit two repositories. `metadata.version` at the top of the manifest is this marketplace's own version and stays owned here.
 
 Each source pins `ref: main`, so the marketplace tracks each plugin repo's default branch. To pin an install to a specific release instead, change `ref` to a tag (or add a `sha`):
 
